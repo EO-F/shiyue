@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    username: root
+    password: root
+    url: jdbc:mysql://192.168.109.129:3306/shiyue_admin?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.109.130:8848
+  application:
+    name: shiyue-admin
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+
+# MapperScan
+# sql映射文件位置
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+# 各个模块都写上端口号,不同模块端口号要不同
+server:
+  port: 7000

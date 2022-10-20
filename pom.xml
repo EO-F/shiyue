@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.ye.shiyue</groupId>
+    <artifactId>shiyue</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>shiyue</name>
+    <description>shiyue</description>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>shiyue-admin</module>
+        <module>shiyue-news</module>
+        <module>shiyue-user</module>
+        <module>shiyue-common</module>
+        <module>shiyue-gateway</module>
+        <module>shiyue-third-part</module>
+    </modules>
+</project>
