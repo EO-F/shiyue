@@ -8,6 +8,7 @@ import com.ye.shiyue.user.pojo.FreeBack;
 import com.ye.shiyue.user.pojo.User;
 import com.ye.shiyue.user.service.FreeBackService;
 import com.ye.shiyue.user.service.UserService;
+import com.ye.shiyue.user.vo.FreeBackDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

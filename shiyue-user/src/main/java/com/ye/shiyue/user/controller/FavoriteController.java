@@ -3,6 +3,7 @@ package com.ye.shiyue.user.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ye.shiyue.common.utils.Result;
+import com.ye.shiyue.user.feign.NewFeignService;
 import com.ye.shiyue.user.pojo.Favorite;
 import com.ye.shiyue.user.service.FavoriteService;
 import io.swagger.annotations.Api;
@@ -21,8 +22,20 @@ public class FavoriteController {
     @Autowired
     private FavoriteService favoriteService;
 
+//    @Autowired
+//    private NewService newService;
+
     @Autowired
-    private NewService newService;
+    NewFeignService newFeignService;
+
+    @GetMapping("/getMyFavorite")
+    public Favorite getMyFavorite(Integer userId,Integer newId){
+        LambdaQueryWrapper<Favorite> favoriteQueryWrapper = new LambdaQueryWrapper<>();
+        favoriteQueryWrapper.eq(Favorite::getNewId,newId)
+                .eq(Favorite::getUserId,userId);
+        Favorite favorite = favoriteService.getOne(favoriteQueryWrapper);
+        return favorite;
+    }
 
 
     /**
@@ -51,23 +64,27 @@ public class FavoriteController {
         return Result.ok().message("取消收藏成功");
     }
 
-//    /**
-//     *  删除收藏
-//     *
-//     * @author 叶旭晖
-//     * @date 2022/5/2 16:13
-//     * @return Result
-//     */
-//    @ApiOperation("删除收藏")
-//    @DeleteMapping("/deleteFavorite")
-//    public Result deleteFavorite(@ApiParam("需要删除的收藏的id") Integer newId){
-//
-//        boolean flag = favoriteService.removeById(newId);
-//        if(flag){
-//            return Result.ok().message("删除收藏成功");
-//        }
-//        return Result.fail().message("删除收藏失败");
-//    }
+    /**
+     *  根据新闻ids删除收藏，供远程调用
+     *
+     * @author 叶旭晖
+     * @date 2022/10/20 17:16
+     * @return Result
+     */
+    @ApiOperation("删除收藏")
+    @DeleteMapping("/deleteFavorite")
+    public Result deleteFavorite(@ApiParam("需要删除的收藏的id") @RequestBody List<Integer> newIds){
+
+        LambdaQueryWrapper<Favorite> queryWrapper = new LambdaQueryWrapper<>();
+        for(Integer id : newIds){
+            queryWrapper.eq(Favorite::getNewId,id);
+        }
+        boolean flag = favoriteService.remove(queryWrapper);
+        if(flag){
+            return Result.ok().message("删除收藏成功");
+        }
+        return Result.fail().message("删除收藏失败");
+    }
 
 
     /**
@@ -83,17 +100,19 @@ public class FavoriteController {
                                  @ApiParam("分页查询的大小") @PathVariable("pageSize") Integer pageSize,
                                  @ApiParam("用户的id") @PathVariable("userId") Integer userId){
 
-        Page<News> page = new Page<>(pageNo,pageSize);
+//        Page<News> page = new Page<>(pageNo,pageSize);
 
         LambdaQueryWrapper<Favorite> favoriteQueryWrapper = new LambdaQueryWrapper<>();
         favoriteQueryWrapper.eq(Favorite::getUserId,userId);
         List<Favorite> favoriteList = favoriteService.list(favoriteQueryWrapper);
 
-        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
-        for(Favorite favorite : favoriteList){
-            queryWrapper.in(News::getId,favorite.getNewId()).or();
-        }
-        Page<News> favoritePage = newService.page(page,queryWrapper);
+//        LambdaQueryWrapper<New> queryWrapper = new LambdaQueryWrapper<>();
+//        for(Favorite favorite : favoriteList){
+//            queryWrapper.in(News::getId,favorite.getNewId()).or();
+//        }
+//        Page<News> favoritePage = newService.page(page,queryWrapper);
+
+        Page favoritePage = newFeignService.getAllNewByIds(pageNo, pageSize, favoriteList);
 
         return Result.ok(favoritePage);
     }

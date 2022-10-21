@@ -2,6 +2,9 @@ package com.ye.shiyue.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ye.shiyue.common.constant.ResultCodeConstant;
+import com.ye.shiyue.common.utils.Result;
+import com.ye.shiyue.user.feign.NewFeignService;
 import com.ye.shiyue.user.mapper.LikeMapper;
 import com.ye.shiyue.user.pojo.Likes;
 import com.ye.shiyue.user.service.LikeService;
@@ -14,8 +17,10 @@ public class LikeServiceImpl extends ServiceImpl<LikeMapper, Likes> implements L
     @Autowired
     private LikeMapper likeMapper;
 
+//    @Autowired
+//    private NewMapper newMapper;
     @Autowired
-    private NewMapper newMapper;
+    NewFeignService newFeignService;
 
     @Override
     public boolean addToLike(Likes likes) {
@@ -36,11 +41,16 @@ public class LikeServiceImpl extends ServiceImpl<LikeMapper, Likes> implements L
         }
         //未点赞，给新闻点赞数添加点赞
         //增加新闻点赞数
-        LambdaQueryWrapper<News> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(News::getId,newId);
-        News news = newMapper.selectOne(lambdaQueryWrapper);
-        news.setLikes(news.getLikes() + 1);
-        newMapper.updateById(news);
+
+//        LambdaQueryWrapper<News> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+//        lambdaQueryWrapper.eq(News::getId,newId);
+//        News news = newMapper.selectOne(lambdaQueryWrapper);
+//        news.setLikes(news.getLikes() + 1);
+//        newMapper.updateById(news);
+        Result result = newFeignService.updateNewLike(newId);
+        if(result.getCode() == ResultCodeConstant.SUCCESS.getCode()){
+
+        }
         //添加Like点赞关系
         likeMapper.insert(likes);
         return true;

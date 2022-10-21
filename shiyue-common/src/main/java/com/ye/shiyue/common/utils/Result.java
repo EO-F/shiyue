@@ -1,9 +1,13 @@
 package com.ye.shiyue.common.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.ye.shiyue.common.constant.ResultCodeConstant;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.HashMap;
 
 /**
  * 全局统一返回结果类
@@ -12,7 +16,7 @@ import lombok.Data;
 @Data
 @ApiModel(value = "全局统一返回结果")
 public class Result<T> {
-
+    private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "返回码")
     private Integer code;
 
@@ -23,6 +27,8 @@ public class Result<T> {
     private T data;
 
     public Result(){}
+
+    //利用fastjson进行反序列化
 
     // 返回数据
     protected static <T> Result<T> build(T data) {

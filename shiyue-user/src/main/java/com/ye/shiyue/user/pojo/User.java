@@ -1,14 +1,13 @@
 package com.ye.shiyue.user.pojo;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.ye.shiyue.user.handler.ListToStringHandler;
+import com.ye.shiyue.common.handler.ListToStringHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.JdbcType;
 
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 

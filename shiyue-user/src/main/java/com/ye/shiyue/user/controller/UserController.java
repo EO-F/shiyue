@@ -99,11 +99,19 @@ public class UserController {
      */
     @ApiOperation("查询一个用户的信息")
     @GetMapping("/getMsgById/{userId}")
-    private Result getMsgById(@ApiParam("用户的id") @PathVariable("userId") Integer userId){
+    public Result getMsgById(@ApiParam("用户的id") @PathVariable("userId") Integer userId){
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getId,userId);
         User user = userService.getOne(queryWrapper);
         return Result.ok(user);
+    }
+
+    @GetMapping("/getKeyWordById/{userId}")
+    public User getKeyWordById(@ApiParam("用户的id") @PathVariable("userId") Integer userId){
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId,userId);
+        User user = userService.getOne(queryWrapper);
+        return user;
     }
 
     /**
@@ -154,7 +162,7 @@ public class UserController {
     @GetMapping("/getCount")
     public Result getCount(){
         //直接获取字符串即可
-        int count = userService.count();
+        long count = userService.count();
 
         return Result.ok(count);
     }
@@ -176,7 +184,7 @@ public class UserController {
         String startTimeFormat = sdf.format(date);
         //判断条件，获取注册时间在今日的用户
         queryWrapper.apply("date_format(register_time, '%Y-%m-%d') = {0}", startTimeFormat);
-        int count = userService.count(queryWrapper);
+        long count = userService.count(queryWrapper);
 
         return Result.ok(count);
     }
@@ -238,12 +246,12 @@ public class UserController {
         //先查询出男生的数量
         LambdaQueryWrapper<User> queryWrapperMan = new LambdaQueryWrapper<>();
         queryWrapperMan.eq(User::getGender,1);
-        int countMan = userService.count(queryWrapperMan);
+        long countMan = userService.count(queryWrapperMan);
         //再查询出女生的数量
         LambdaQueryWrapper<User> queryWrapperWomen = new LambdaQueryWrapper<>();
         queryWrapperWomen.eq(User::getGender,0);
-        int countWomen = userService.count(queryWrapperWomen);
-        int[] parent = new int[2];
+        long countWomen = userService.count(queryWrapperWomen);
+        long[] parent = new long[2];
         parent[0] = countMan;
         parent[1] = countWomen;
 //        System.out.println(countWomen + "_" + countMan);
@@ -279,7 +287,7 @@ public class UserController {
         String s1 = year + "-" + "0" + nowMonth;
        //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper1.apply("date_format(register_time, '%Y-%m') = {0}", s1);
-        int count1 = userService.count(queryWrapper1);
+        long count1 = userService.count(queryWrapper1);
         /**********************************************************************/
         //查询第二个月份的用户新增的用户个数
         int m2,y2;
@@ -303,7 +311,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper2 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper2.apply("date_format(register_time, '%Y-%m') = {0}", s2);
-        int count2 = userService.count(queryWrapper2);
+        long count2 = userService.count(queryWrapper2);
         /**********************************************************************/
         //查询第三个月份的用户新增的用户个数
         int m3,y3;
@@ -327,7 +335,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper3 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper3.apply("date_format(register_time, '%Y-%m') = {0}", s3);
-        int count3 = userService.count(queryWrapper3);
+        long count3 = userService.count(queryWrapper3);
         /**********************************************************************/
         //查询第四个月份的用户新增的用户个数
         int m4,y4;
@@ -351,7 +359,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper4 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper4.apply("date_format(register_time, '%Y-%m') = {0}", s4);
-        int count4 = userService.count(queryWrapper4);
+        long count4 = userService.count(queryWrapper4);
         /**********************************************************************/
         //查询第五个月份的用户新增的用户个数
         int m5,y5;
@@ -375,7 +383,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper5 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper5.apply("date_format(register_time, '%Y-%m') = {0}", s5);
-        int count5 = userService.count(queryWrapper5);
+        long count5 = userService.count(queryWrapper5);
         /**********************************************************************/
         //查询第六个月份的用户新增的用户个数
         int m6,y6;
@@ -399,7 +407,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper6 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper6.apply("date_format(register_time, '%Y-%m') = {0}", s6);
-        int count6 = userService.count(queryWrapper6);
+        long count6 = userService.count(queryWrapper6);
         /**********************************************************************/
         //查询第七个月份的用户新增的用户个数
         int m7,y7;
@@ -423,7 +431,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper7 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper7.apply("date_format(register_time, '%Y-%m') = {0}", s7);
-        int count7 = userService.count(queryWrapper7);
+        long count7 = userService.count(queryWrapper7);
         /**********************************************************************/
         //查询第八个月份的用户新增的用户个数
         int m8,y8;
@@ -447,7 +455,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper8 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper8.apply("date_format(register_time, '%Y-%m') = {0}", s8);
-        int count8 = userService.count(queryWrapper8);
+        long count8 = userService.count(queryWrapper8);
         /**********************************************************************/
         //查询第九个月份的用户新增的用户个数
         int m9,y9;
@@ -471,7 +479,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper9 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper9.apply("date_format(register_time, '%Y-%m') = {0}", s9);
-        int count9 = userService.count(queryWrapper9);
+        long count9 = userService.count(queryWrapper9);
         /**********************************************************************/
         //查询第十个月份的用户新增的用户个数
         int m10,y10;
@@ -495,7 +503,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper10 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper10.apply("date_format(register_time, '%Y-%m') = {0}", s10);
-        int count10 = userService.count(queryWrapper10);
+        long count10 = userService.count(queryWrapper10);
         /**********************************************************************/
         //查询第十一个月份的用户新增的用户个数
         int m11,y11;
@@ -519,7 +527,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper11 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper11.apply("date_format(register_time, '%Y-%m') = {0}", s11);
-        int count11 = userService.count(queryWrapper11);
+        long count11 = userService.count(queryWrapper11);
         /**********************************************************************/
         //查询第十二个月份的用户新增的用户个数
         int m12,y12;
@@ -543,7 +551,7 @@ public class UserController {
         LambdaQueryWrapper<User> queryWrapper12 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper12.apply("date_format(register_time, '%Y-%m') = {0}", s12);
-        int count12 = userService.count(queryWrapper12);
+        long count12 = userService.count(queryWrapper12);
         //对月份和对应的数值封装成对象
         List<String> monthList = new ArrayList<>();
         monthList.add(nowMonth + "月");
@@ -558,7 +566,7 @@ public class UserController {
         monthList.add(m10 + "月");
         monthList.add(m11 + "月");
         monthList.add(m12 + "月");
-        List<Integer> numberList = new ArrayList<>();
+        List<Long> numberList = new ArrayList<>();
         numberList.add(count1);
         numberList.add(count2);
         numberList.add(count3);

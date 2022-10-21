@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -48,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean register(UserParam userParam) {
         User user = new User();
         BeanUtils.copyProperties(userParam, user);
-        user.setRegisterTime(LocalDateTime.now());
+        user.setRegisterTime(new Date());
         user.setStatus(1);
         //查询是否有相同用户名的用户
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();

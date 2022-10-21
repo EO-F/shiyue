@@ -1,4 +1,4 @@
-package com.ye.shiyue.user.vo;
+package com.ye.shiyue.news.vo;
 
 import lombok.Data;
 

@@ -3,6 +3,7 @@ package com.ye.shiyue.user.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ye.shiyue.common.utils.Result;
+import com.ye.shiyue.user.feign.NewFeignService;
 import com.ye.shiyue.user.pojo.Likes;
 import com.ye.shiyue.user.service.LikeService;
 import io.swagger.annotations.Api;
@@ -11,6 +12,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
@@ -21,8 +23,19 @@ public class LikeController {
     @Autowired
     private LikeService likeService;
 
+//    @Autowired
+//    private NewService newService;
     @Autowired
-    private NewService newService;
+    NewFeignService newFeignService;
+
+    @GetMapping("/getMyLike")
+    public Likes getMyLike(Integer userId,Integer newId){
+        LambdaQueryWrapper<Likes> likeQueryWrapper = new LambdaQueryWrapper<>();
+        likeQueryWrapper.eq(Likes::getNewId,newId)
+                .eq(Likes::getUserId,userId);
+        Likes likes = likeService.getOne(likeQueryWrapper);
+        return likes;
+    }
 
 
     /**
@@ -43,23 +56,27 @@ public class LikeController {
         return Result.fail().message("取消点赞");
     }
 
-//    /**
-//     *  取消点赞
-//     *
-//     * @author 叶旭晖
-//     * @date 2022/5/2 16:25
-//     * @return Result
-//     */
-//    @ApiOperation("取消点赞")
-//    @DeleteMapping("/deleteLike/{newId}")
-//    public Result deleteLike(@ApiParam("取消点赞的新闻id") @PathVariable("newId") Integer newId,HttpServletRequest request){
-//        Integer userId = (Integer) request.getSession().getAttribute("userId");
-//        boolean flag = likeService.removeToLike(newId,userId);
-//        if(flag){
-//            return Result.ok().message("取消点赞成功");
-//        }
-//        return Result.fail().message("取消点赞失败");
-//    }
+    /**
+     *  根据新闻ids删除对应的点赞记录，供远程调用
+     *
+     * @author 叶旭晖
+     * @date 2022/10/20 17:31
+     * @return Result
+     */
+    @ApiOperation("取消点赞")
+    @DeleteMapping("/deleteLike")
+    public Result deleteLike(@RequestBody List<Integer> newIds){
+
+        LambdaQueryWrapper<Likes> queryWrapper = new LambdaQueryWrapper<>();
+        for(Integer id : newIds){
+            queryWrapper.eq(Likes::getNewId,id);
+        }
+        boolean flag = likeService.remove(queryWrapper);
+        if(flag){
+            return Result.ok().message("取消点赞成功");
+        }
+        return Result.fail().message("取消点赞失败");
+    }
 
     /**
      *  分页查询所有点赞新闻
@@ -74,18 +91,19 @@ public class LikeController {
                                 @ApiParam("分页查询的大小") @PathVariable("pageSize") Integer pageSize,
                                 @ApiParam("用户的id") @PathVariable("userId") Integer userId){
 
-        Page<News> page = new Page<>(pageNo,pageSize);
+//        Page<News> page = new Page<>(pageNo,pageSize);
 
         LambdaQueryWrapper<Likes> likeQueryWrapper = new LambdaQueryWrapper<>();
         likeQueryWrapper.eq(Likes::getUserId,userId);
         List<Likes> likesList = likeService.list(likeQueryWrapper);
 
-        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
-        for(Likes likes : likesList){
-            queryWrapper.in(News::getId, likes.getNewId()).or();
-        }
-
-        Page<News> likePage = newService.page(page,queryWrapper);
+//        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
+//        for(Likes likes : likesList){
+//            queryWrapper.in(News::getId, likes.getNewId()).or();
+//        }
+//
+//        Page<News> likePage = newService.page(page,queryWrapper);
+        Page likePage = newFeignService.getAllNewByLikeIds(pageNo, pageSize, likesList);
         return Result.ok(likePage);
     }
 }

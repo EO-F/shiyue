@@ -1,5 +1,6 @@
 package com.ye.shiyue.admin.controller;
 
+import com.ye.shiyue.admin.feign.UploadFeignService;
 import com.ye.shiyue.admin.pojo.Admin;
 import com.ye.shiyue.admin.service.AdminService;
 import com.ye.shiyue.common.utils.Result;
@@ -8,6 +9,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/admin")
@@ -17,20 +19,20 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
-    //TODO 使用第三方模块进行图片上传
-//    @Autowired
-//    private FileUploadService fileUploadService;
-//
-//    @ApiOperation("文件上传统一入口")
-//    @PostMapping("/imgUpload")
-//    public Result imgUpload(
-//            @ApiParam("图片文件") @RequestPart("multipartFile") MultipartFile multipartFile){
-//
-//        //图片的真实路径
-//        String portraitPath = fileUploadService.upload(multipartFile);
-//
-//        return Result.ok(portraitPath);
-//    }
+    //TODO 测试
+    @Autowired
+    UploadFeignService uploadFeignService;
+
+    @ApiOperation("文件上传统一入口")
+    @PostMapping("/imgUpload")
+    public Result imgUpload(
+            @ApiParam("图片文件") @RequestPart("multipartFile") MultipartFile multipartFile){
+
+        //图片的真实路径
+        String portraitPath = uploadFeignService.upload(multipartFile);
+
+        return Result.ok(portraitPath);
+    }
 
     @ApiOperation("管理员登录")
     @PostMapping("/login")

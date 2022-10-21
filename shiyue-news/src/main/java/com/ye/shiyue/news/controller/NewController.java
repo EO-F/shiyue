@@ -1,19 +1,23 @@
 package com.ye.shiyue.news.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ye.shiyue.common.utils.Result;
+import com.ye.shiyue.news.feign.UserFeignService;
 import com.ye.shiyue.news.pojo.NewLogs;
 import com.ye.shiyue.news.pojo.News;
 import com.ye.shiyue.news.service.NewLogsService;
 import com.ye.shiyue.news.service.NewService;
 import com.ye.shiyue.news.utils.TFIDF;
-import com.ye.shiyue.news.vo.NewVo;
+import com.ye.shiyue.news.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.ansj.app.keyword.Keyword;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,16 +36,7 @@ public class NewController {
     private NewService newService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private FavoriteService favoriteService;
-
-    @Autowired
-    private LikeService likeService;
+    UserFeignService userFeignService;
 
     @Autowired
     private NewLogsService newLogsService;
@@ -66,6 +61,43 @@ public class NewController {
         return Result.ok(pageRs);
     }
 
+    @GetMapping("/getAllNewByFaIds/{pageNo}/{pageSize}")
+    private Page getAllNewByIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<FavoriteVo> favoriteList){
+
+        Page<News> page = new Page<>(pageNo,pageSize);
+
+        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
+        for(FavoriteVo favorite : favoriteList){
+            queryWrapper.in(News::getId,favorite.getNewId()).or();
+        }
+        Page<News> favoritePage = newService.page(page,queryWrapper);
+
+        return favoritePage;
+    }
+    @GetMapping("/getAllNewByLikeIds/{pageNo}/{pageSize}")
+    private Page getAllNewByLikeIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<LikeVo> likesList){
+
+        Page<News> page = new Page<>(pageNo,pageSize);
+
+        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
+        for(LikeVo likes : likesList){
+            queryWrapper.in(News::getId, likes.getNewId()).or();
+        }
+
+        Page<News> likePage = newService.page(page,queryWrapper);
+
+        return likePage;
+    }
+
+    @PutMapping("/updateNewLike")
+    public Result updateNewLike(Integer newId){
+        LambdaQueryWrapper<News> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(News::getId,newId);
+        News news = newService.getOne(lambdaQueryWrapper);
+        news.setLikes(news.getLikes() + 1);
+        newService.updateById(news);
+        return Result.ok();
+    }
     /**
      *  根据种类查询新闻信息
      *
@@ -112,19 +144,17 @@ public class NewController {
     @DeleteMapping("/deleteNew")
     public Result deleteNew(@RequestBody List<Integer> ids){
 
-        //先删除与当前id有关的喜欢
-        LambdaQueryWrapper<Likes> likesLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        for(Integer id : ids) {
-            likesLambdaQueryWrapper.eq(Likes::getNewId, id).or();
+        LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
+        for(Integer id : ids){
+            queryWrapper.eq(News::getId,id);
         }
-        likeService.remove(likesLambdaQueryWrapper);
+        List<News> newsList = newService.list(queryWrapper);
 
-        //删除与当前id有关的收藏
-        LambdaQueryWrapper<Favorite> favoriteLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        for(Integer id : ids) {
-            favoriteLambdaQueryWrapper.eq(Favorite::getNewId, id).or();
-        }
-        favoriteService.remove(favoriteLambdaQueryWrapper);
+        //先删除与当前id有关的喜欢 TODO 远程调用测试
+        userFeignService.deleteLike(ids);
+
+        //删除与当前id有关的收藏 TODO 远程调用测试
+        userFeignService.deleteFavorite(ids);
 
         //删除与当前id有关的历史记录
         LambdaQueryWrapper<NewLogs> newLogsLambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -152,7 +182,7 @@ public class NewController {
     @PostMapping("/updateNew")
     public Result addOrUpdateNew(@ApiParam("JSON格式的新闻对象") @RequestBody News news){
 
-        news.setPublishTime(LocalDateTime.now());
+        news.setPublishTime(new Date());
         String content = news.getContent();
         String title = news.getTitle();
         //重新获取新闻的关键词
@@ -179,7 +209,7 @@ public class NewController {
     @GetMapping("/getCount")
     public Result getCount(){
 
-        int count = newService.count();
+        long count = newService.count();
 
         return Result.ok(count);
     }
@@ -218,7 +248,7 @@ public class NewController {
         String startTimeFormat = sdf.format(date);
         //判断条件，获取注册时间在今日的用户
         queryWrapper.apply("date_format(publish_time, '%Y-%m-%d') = {0}", startTimeFormat);
-        int count = newService.count(queryWrapper);
+        long count = newService.count(queryWrapper);
         return Result.ok(count);
     }
 
@@ -245,7 +275,7 @@ public class NewController {
         }
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper1.apply("date_format(publish_time, '%Y-%m') = {0}", s1);
-        int count1 = newService.count(queryWrapper1);
+        long count1 = newService.count(queryWrapper1);
         /**********************************************************************/
         //查询第二个月份的用户新增的用户个数
         int m2,y2;
@@ -269,7 +299,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper2 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper2.apply("date_format(publish_time, '%Y-%m') = {0}", s2);
-        int count2 = newService.count(queryWrapper2);
+        Long count2 = newService.count(queryWrapper2);
         /**********************************************************************/
         //查询第三个月份的用户新增的用户个数
         int m3,y3;
@@ -293,7 +323,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper3 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper3.apply("date_format(publish_time, '%Y-%m') = {0}", s3);
-        int count3 = newService.count(queryWrapper3);
+        Long count3 = newService.count(queryWrapper3);
         /**********************************************************************/
         //查询第四个月份的用户新增的用户个数
         int m4,y4;
@@ -317,7 +347,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper4 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper4.apply("date_format(publish_time, '%Y-%m') = {0}", s4);
-        int count4 = newService.count(queryWrapper4);
+        Long count4 = newService.count(queryWrapper4);
         /**********************************************************************/
         //查询第五个月份的用户新增的用户个数
         int m5,y5;
@@ -341,7 +371,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper5 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper5.apply("date_format(publish_time, '%Y-%m') = {0}", s5);
-        int count5 = newService.count(queryWrapper5);
+        Long count5 = newService.count(queryWrapper5);
         /**********************************************************************/
         //查询第六个月份的用户新增的用户个数
         int m6,y6;
@@ -365,7 +395,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper6 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper6.apply("date_format(publish_time, '%Y-%m') = {0}", s6);
-        int count6 = newService.count(queryWrapper6);
+        Long count6 = newService.count(queryWrapper6);
         /**********************************************************************/
         //查询第七个月份的用户新增的用户个数
         int m7,y7;
@@ -389,7 +419,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper7 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper7.apply("date_format(publish_time, '%Y-%m') = {0}", s7);
-        int count7 = newService.count(queryWrapper7);
+        Long count7 = newService.count(queryWrapper7);
         /**********************************************************************/
         //查询第八个月份的用户新增的用户个数
         int m8,y8;
@@ -413,7 +443,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper8 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper8.apply("date_format(publish_time, '%Y-%m') = {0}", s8);
-        int count8 = newService.count(queryWrapper8);
+        Long count8 = newService.count(queryWrapper8);
         /**********************************************************************/
         //查询第九个月份的用户新增的用户个数
         int m9,y9;
@@ -437,7 +467,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper9 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper9.apply("date_format(publish_time, '%Y-%m') = {0}", s9);
-        int count9 = newService.count(queryWrapper9);
+        Long count9 = newService.count(queryWrapper9);
         /**********************************************************************/
         //查询第十个月份的用户新增的用户个数
         int m10,y10;
@@ -461,7 +491,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper10 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper10.apply("date_format(publish_time, '%Y-%m') = {0}", s10);
-        int count10 = newService.count(queryWrapper10);
+        Long count10 = newService.count(queryWrapper10);
         /**********************************************************************/
         //查询第十一个月份的用户新增的用户个数
         int m11,y11;
@@ -485,7 +515,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper11 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper11.apply("date_format(publish_time, '%Y-%m') = {0}", s11);
-        int count11 = newService.count(queryWrapper11);
+        Long count11 = newService.count(queryWrapper11);
         /**********************************************************************/
         //查询第十二个月份的用户新增的用户个数
         int m12,y12;
@@ -509,7 +539,7 @@ public class NewController {
         LambdaQueryWrapper<News> queryWrapper12 = new LambdaQueryWrapper<>();
         //判断条件，获取注册时间在第一个月份的用户数量
         queryWrapper12.apply("date_format(publish_time, '%Y-%m') = {0}", s12);
-        int count12 = newService.count(queryWrapper12);
+        Long count12 = newService.count(queryWrapper12);
         //对月份和对应的数值封装成对象
         List<String> monthList = new ArrayList<>();
         monthList.add(nowMonth + "月");
@@ -524,7 +554,7 @@ public class NewController {
         monthList.add(m10 + "月");
         monthList.add(m11 + "月");
         monthList.add(m12 + "月");
-        List<Integer> numberList = new ArrayList<>();
+        List<Long> numberList = new ArrayList<>();
         numberList.add(count1);
         numberList.add(count2);
         numberList.add(count3);
@@ -558,75 +588,75 @@ public class NewController {
 
         List<String> categoryList = new ArrayList<>();
 
-        List<Integer> numberList = new ArrayList<>();
+        List<Long> numberList = new ArrayList<>();
 
         //查询出社会种类的数量
         LambdaQueryWrapper<News> queryWrapper1 = new LambdaQueryWrapper<>();
         queryWrapper1.eq(News::getCategoryId,1);
-        int count1 = newService.count(queryWrapper1);
+        long count1 = newService.count(queryWrapper1);
         categoryList.add("社会");
         numberList.add(count1);
 
         //查询出科技种类的数量
         LambdaQueryWrapper<News> queryWrapper2 = new LambdaQueryWrapper<>();
         queryWrapper2.eq(News::getCategoryId,2);
-        int count2 = newService.count(queryWrapper2);
+        long count2 = newService.count(queryWrapper2);
         categoryList.add("科技");
         numberList.add(count2);
 
         //查询出房产种类的数量
         LambdaQueryWrapper<News> queryWrapper3 = new LambdaQueryWrapper<>();
         queryWrapper3.eq(News::getCategoryId,3);
-        int count3 = newService.count(queryWrapper3);
+        long count3 = newService.count(queryWrapper3);
         categoryList.add("房产");
         numberList.add(count3);
 
         //查询出财经种类的数量
         LambdaQueryWrapper<News> queryWrapper4 = new LambdaQueryWrapper<>();
         queryWrapper4.eq(News::getCategoryId,4);
-        int count4 = newService.count(queryWrapper4);
+        long count4 = newService.count(queryWrapper4);
         categoryList.add("财经");
         numberList.add(count4);
 
         //查询出时尚种类的数量
         LambdaQueryWrapper<News> queryWrapper5 = new LambdaQueryWrapper<>();
         queryWrapper5.eq(News::getCategoryId,5);
-        int count5 = newService.count(queryWrapper5);
+        long count5 = newService.count(queryWrapper5);
         categoryList.add("时尚");
         numberList.add(count5);
 
         //查询出游戏种类的数量
         LambdaQueryWrapper<News> queryWrapper6 = new LambdaQueryWrapper<>();
         queryWrapper6.eq(News::getCategoryId,6);
-        int count6 = newService.count(queryWrapper6);
+        long count6 = newService.count(queryWrapper6);
         categoryList.add("游戏");
         numberList.add(count6);
 
         //查询出体育种类的数量
         LambdaQueryWrapper<News> queryWrapper7 = new LambdaQueryWrapper<>();
         queryWrapper7.eq(News::getCategoryId,7);
-        int count7 = newService.count(queryWrapper7);
+        long count7 = newService.count(queryWrapper7);
         categoryList.add("体育");
         numberList.add(count7);
 
         //查询出时政种类的数量
         LambdaQueryWrapper<News> queryWrapper8 = new LambdaQueryWrapper<>();
         queryWrapper8.eq(News::getCategoryId,8);
-        int count8 = newService.count(queryWrapper8);
+        long count8 = newService.count(queryWrapper8);
         categoryList.add("时政");
         numberList.add(count8);
 
         //查询出教育种类的数量
         LambdaQueryWrapper<News> queryWrapper9 = new LambdaQueryWrapper<>();
         queryWrapper9.eq(News::getCategoryId,9);
-        int count9 = newService.count(queryWrapper9);
+        long count9 = newService.count(queryWrapper9);
         categoryList.add("教育");
         numberList.add(count9);
 
         //查询出娱乐种类的数量
         LambdaQueryWrapper<News> queryWrapper10 = new LambdaQueryWrapper<>();
         queryWrapper10.eq(News::getCategoryId,10);
-        int count10 = newService.count(queryWrapper10);
+        long count10 = newService.count(queryWrapper10);
         categoryList.add("娱乐");
         numberList.add(count10);
 
@@ -687,8 +717,7 @@ public class NewController {
 
         LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
 
-        queryWrapper.orderByDesc().last("limit 4");
-
+        queryWrapper.orderByDesc(News::getPublishTime).last("limit 4");
         List<News> list = newService.list(queryWrapper);
 
         return Result.ok(list);
@@ -707,13 +736,16 @@ public class NewController {
                                    @ApiParam("分页查询的大小") @PathVariable("pageSize") Integer pageSize,
                                    @ApiParam("用户的id") @PathVariable("userId") Integer userId){
 
-        //查询当前用户
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getId,userId);
-        User user = userService.getOne(queryWrapper);
-
-        //获取用户的关键词列表
-        List<String> keyWord = user.getKeyWord();
+//        //查询当前用户
+//        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.eq(User::getId,userId);
+//        User user = userService.getOne(queryWrapper);
+//
+//        //获取用户的关键词列表
+//        List<String> keyWord = user.getKeyWord();
+        // TODO 远程调用测试
+        UserMsgVo userMsgVo = userFeignService.getKeyWordById(userId);
+        List<String> keyWord = userMsgVo.getKeyWord();
 
         //使用关键词对新闻进行查询
         LambdaQueryWrapper<News> lambdaQueryWrapper = new LambdaQueryWrapper<>();
