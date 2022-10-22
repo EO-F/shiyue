@@ -12,6 +12,12 @@ spring:
     name: shiyue-news
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      use-key-prefix: true
+      cache-null-values: true
 
 # MapperScan
 # sql映射文件位置

@@ -11,6 +11,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,6 +52,7 @@ public class NewLogsController {
      * @date 2022/5/21 17:04
      * @return Result
      */
+    @Cacheable(value = "newLogMsg",key = "#root.methodName.name")
     @ApiOperation("分页查询新闻记录")
     @GetMapping("/getNewMsg/{pageNo}/{pageSize}/{userId}")
     public Result getMsg(@ApiParam("分页查询的页码数") @PathVariable("pageNo") Integer pageNo,

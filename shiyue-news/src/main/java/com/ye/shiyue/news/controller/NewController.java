@@ -19,6 +19,9 @@ import io.swagger.annotations.ApiParam;
 import org.ansj.app.keyword.Keyword;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
@@ -140,6 +143,7 @@ public class NewController {
      * @date 2022/5/2 11:47
      * @return Result
      */
+    @CacheEvict(value = {"pageNews","categoryNews"},key = "#root.methodName.name")
     @ApiOperation("根据ids删除新闻")
     @DeleteMapping("/deleteNew")
     public Result deleteNew(@RequestBody List<Integer> ids){
@@ -178,6 +182,7 @@ public class NewController {
      * @date 2022/5/2 12:07
      * @return Result
      */
+    @CachePut(value = {"pageNews","categoryNews"},key = "#root.methodName.name")
     @ApiOperation("保存或修改新闻信息")
     @PostMapping("/updateNew")
     public Result addOrUpdateNew(@ApiParam("JSON格式的新闻对象") @RequestBody News news){
@@ -238,6 +243,7 @@ public class NewController {
      * @date 2022/5/22 10:01
      * @return Result
      */
+    @Cacheable(value = "todayNews",key = "#root.methodName.name")
     @ApiOperation("获取今日新增的新闻数量")
     @GetMapping("/getTodayNewCount")
     public Result getTodayNewCount(){
@@ -252,6 +258,7 @@ public class NewController {
         return Result.ok(count);
     }
 
+    @Cacheable(value = "monthNews",key = "#root.methodName.name")
     @ApiOperation("获取近x月新闻新增的个数")
     @GetMapping("/getNewMonth")
     public Result getNewMonth(){
@@ -580,6 +587,7 @@ public class NewController {
      * @date 2022/5/27 19:43
      * @return Result
      */
+    @Cacheable(value = "analyzeNews",key = "#root.methodName.name")
     @ApiOperation("新闻种类分析图")
     @GetMapping("/getNewCategory")
     public Result getNewCategory(){

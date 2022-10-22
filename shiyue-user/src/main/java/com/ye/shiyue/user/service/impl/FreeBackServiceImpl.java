@@ -9,6 +9,7 @@ import com.ye.shiyue.user.mapper.UserMapper;
 import com.ye.shiyue.user.pojo.FreeBack;
 import com.ye.shiyue.user.service.FreeBackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +22,7 @@ public class FreeBackServiceImpl extends ServiceImpl<FreeBackMapper, FreeBack> i
     private UserMapper userMapper;
 
 
+    @Cacheable(value = "pageFreeback",key = "#root.methodName.name")
     @Override
     public IPage<FreeBack> getUserAndFreeBack(Page<FreeBack> pageParam){
 

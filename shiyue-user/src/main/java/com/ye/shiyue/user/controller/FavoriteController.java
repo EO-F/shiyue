@@ -10,6 +10,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -94,6 +96,7 @@ public class FavoriteController {
      * @date 2022/5/21 17:01
      * @return Result
      */
+    @Cacheable(value = "pageFavorite",key = "#root.methodName.name")
     @ApiOperation("分页获取所有收藏")
     @GetMapping("/getAllFavorite/{pageNo}/{pageSize}/{userId}")
     public Result getAllFavorite(@ApiParam("分页查询的页码数") @PathVariable("pageNo") Integer pageNo,

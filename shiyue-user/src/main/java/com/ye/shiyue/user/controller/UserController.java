@@ -14,6 +14,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
@@ -174,6 +175,7 @@ public class UserController {
      * @date 2022/5/13 11:41
      * @return Result
      */
+    @Cacheable(value = "todayUser",key = "#root.methodName.name")
     @ApiOperation("获取今日新增的用户数量")
     @GetMapping("/getTodayUserCount")
     public Result getTodayUserCount(){
@@ -240,6 +242,7 @@ public class UserController {
      * @date 2022/5/20 20:13
      * @return Result
      */
+    @Cacheable(value = "genderUser",key = "#root.methodName.name")
     @ApiOperation("查询男女性别比")
     @GetMapping("/getUserGender")
     public Result getUserGender(){
@@ -274,6 +277,7 @@ public class UserController {
      * @date 2022/5/20 20:36
      * @return Result
      */
+    @Cacheable(value = "monthUser",key = "#root.methodName.name")
     @ApiOperation("获取近x月用户新增的个数")
     @GetMapping("/getUserMonth")
     public Result getMonth(){

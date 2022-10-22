@@ -19,6 +19,7 @@ import com.ye.shiyue.news.vo.NewVo;
 import com.ye.shiyue.news.vo.UserMsgVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,8 @@ public class NewServiceImpl extends ServiceImpl<NewMapper, News> implements NewS
     @Autowired
     UserFeignService userFeignService;
 
+
+    @Cacheable(value = "pageNews",key = "#root.methodName.name")
     @Override
     public IPage<News> getNewByOpr(Page<News> pageParam, String newTitle) {
         LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
@@ -51,6 +54,7 @@ public class NewServiceImpl extends ServiceImpl<NewMapper, News> implements NewS
         return page;
     }
 
+    @Cacheable(value = "categoryNews",key="#root.methodName.name")
     @Override
     public IPage<News> getNewByCategory(Page<News> pageParam, Integer categoryId) {
         LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();

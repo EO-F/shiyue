@@ -14,6 +14,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -75,6 +78,7 @@ public class FreeBackController {
      * @date 2022/5/2 17:58
      * @return Result
      */
+    @CachePut(value = "pageFreeback",key = "#root.methodName.name")
     @ApiOperation("添加新的反馈")
     @PostMapping("/addFreeBack")
     public Result addFreeBack(@ApiParam("JSON的FreeBack对象") @RequestBody FreeBack freeBack){
@@ -93,6 +97,7 @@ public class FreeBackController {
      * @date 2022/5/2 17:17
      * @return Result
      */
+    @CacheEvict(value = "pageFreeback",key = "#root.methodName.name")
     @ApiOperation("根据id删除反馈")
     @DeleteMapping("/deleteFreeBack")
     public Result deleteFreeBack(@ApiParam("JSON形式的id集合") @RequestBody List<Integer> ids){

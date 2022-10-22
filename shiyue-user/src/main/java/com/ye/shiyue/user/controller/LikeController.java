@@ -10,6 +10,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -85,6 +86,7 @@ public class LikeController {
      * @date 2022/5/21 17:03
      * @return Result
      */
+    @Cacheable(value = "pageLike",key = "#root.methodName.name")
     @ApiOperation("分页查询所有点赞新闻")
     @GetMapping("/getAllLikeNew/{pageNo}/{pageSize}/{userId}")
     public Result getAllLikeNew(@ApiParam("分页查询的页码数") @PathVariable("pageNo") Integer pageNo,
