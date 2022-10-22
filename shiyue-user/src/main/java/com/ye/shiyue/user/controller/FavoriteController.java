@@ -29,7 +29,7 @@ public class FavoriteController {
     NewFeignService newFeignService;
 
     @GetMapping("/getMyFavorite")
-    public Favorite getMyFavorite(Integer userId,Integer newId){
+    public Favorite getMyFavorite(@RequestParam("userId") Integer userId,@RequestParam("newId") Integer newId){
         LambdaQueryWrapper<Favorite> favoriteQueryWrapper = new LambdaQueryWrapper<>();
         favoriteQueryWrapper.eq(Favorite::getNewId,newId)
                 .eq(Favorite::getUserId,userId);

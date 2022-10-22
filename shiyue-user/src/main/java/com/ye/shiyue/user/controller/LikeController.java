@@ -29,7 +29,7 @@ public class LikeController {
     NewFeignService newFeignService;
 
     @GetMapping("/getMyLike")
-    public Likes getMyLike(Integer userId,Integer newId){
+    public Likes getMyLike(@RequestParam("userId") Integer userId,@RequestParam("newId") Integer newId){
         LambdaQueryWrapper<Likes> likeQueryWrapper = new LambdaQueryWrapper<>();
         likeQueryWrapper.eq(Likes::getNewId,newId)
                 .eq(Likes::getUserId,userId);

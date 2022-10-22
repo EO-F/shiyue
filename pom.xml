@@ -16,5 +16,6 @@
         <module>shiyue-common</module>
         <module>shiyue-gateway</module>
         <module>shiyue-third-part</module>
+        <module>shiyue-search</module>
     </modules>
 </project>

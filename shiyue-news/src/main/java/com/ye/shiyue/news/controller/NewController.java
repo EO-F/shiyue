@@ -61,26 +61,26 @@ public class NewController {
         return Result.ok(pageRs);
     }
 
-    @GetMapping("/getAllNewByFaIds/{pageNo}/{pageSize}")
-    private Page getAllNewByIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<FavoriteVo> favoriteList){
+    @PostMapping("/getAllNewByFaIds/{pageNo}/{pageSize}")
+    private Page<News> getAllNewByIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<Favorite> favoriteList){
 
         Page<News> page = new Page<>(pageNo,pageSize);
 
         LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
-        for(FavoriteVo favorite : favoriteList){
+        for(Favorite favorite : favoriteList){
             queryWrapper.in(News::getId,favorite.getNewId()).or();
         }
         Page<News> favoritePage = newService.page(page,queryWrapper);
 
         return favoritePage;
     }
-    @GetMapping("/getAllNewByLikeIds/{pageNo}/{pageSize}")
-    private Page getAllNewByLikeIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<LikeVo> likesList){
+    @PostMapping("/getAllNewByLikeIds/{pageNo}/{pageSize}")
+    private Page<News> getAllNewByLikeIds(@PathVariable("pageNo") Integer pageNo, @PathVariable("pageSize") Integer pageSize, @RequestBody List<Likes> likesList){
 
         Page<News> page = new Page<>(pageNo,pageSize);
 
         LambdaQueryWrapper<News> queryWrapper = new LambdaQueryWrapper<>();
-        for(LikeVo likes : likesList){
+        for(Likes likes : likesList){
             queryWrapper.in(News::getId, likes.getNewId()).or();
         }
 
@@ -90,7 +90,7 @@ public class NewController {
     }
 
     @PutMapping("/updateNewLike")
-    public Result updateNewLike(Integer newId){
+    public Result updateNewLike(@RequestParam("newId") Integer newId){
         LambdaQueryWrapper<News> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(News::getId,newId);
         News news = newService.getOne(lambdaQueryWrapper);

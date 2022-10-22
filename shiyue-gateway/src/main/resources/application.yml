@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: admin_route
+          uri: lb://shiyue-admin
+          predicates:
+            - Path=/admin/**
+
+        - id: user_route
+          uri: lb://shiyue-user
+          predicates:
+            - Path=/user/**,/like/**,/freeback/**,/favorite/**
+
+        - id: news_route
+          uri: lb://shiyue-news
+          predicates:
+            - Path=/new/**,/newlogs/**
+
+        - id: third_part_route
+          uri: lb://shiyue-third_part
+          predicates:
+            - Path=/thirdpart/**
